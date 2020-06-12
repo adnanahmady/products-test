@@ -41,6 +41,7 @@ abstract class Filter {
         $this->builder = $builder;
 
         foreach ($this->getFilters() as $key => $value) {
+            if ($value === null) continue;
             if (method_exists(
                 $this,
                 $method = $this->getMethodName($key)
