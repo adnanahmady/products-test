@@ -10,9 +10,10 @@ class ProductController extends Controller
 {
     public function index(ProductFilter $filter)
     {
-        $products = Product::filter($filter)->paginate();
+        $products = Product::with('colors')
+            ->filter($filter)
+            ->paginate();
 
-        dd($products, $filter->getFilters());
         return view('products.index', compact('products'));
     }
 }

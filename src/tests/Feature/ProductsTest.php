@@ -7,8 +7,8 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Product;
 use App\Constants\Product as ProductConstant;
-use App\Constants\ProductType as ProductTypeConstant;
-use App\ProductType;
+use App\Constants\ColorProduct as ColorProductConstant;
+use App\Color;
 
 class ProductsTest extends TestCase
 {
@@ -58,27 +58,79 @@ class ProductsTest extends TestCase
     {
         $this->withoutExceptionHandling();
         $prices = [10000, 17000, 25000, 18000];
-        foreach ($prices as $price) {
-            $productTypes[] = factory(ProductType::class)->create([
-                'price' => $price
-            ]);
-        }
+        $products = array_map(function ($price) {
+            $product = factory(Product::class)->create();
+            $product->colors()->attach(
+                factory(Color::class)->create()->id,
+                [ColorProductConstant::PRICE => $price]
+            );
+
+            return $product;
+        }, $prices);
 
         $response = $this->get(route('products', [
-            'price_range' => [1000, 15000]
+            'price_range' => "15000,17400"
         ]));
         $response->assertStatus(200);
 
         $this->assertStringContainsString(
-            array_shift($productTypes)->{ProductTypeConstant::PRICE},
+            $products[1]
+                ->colors
+                ->first()
+                ->pivot
+                ->{ColorProductConstant::PRICE},
             $response->getContent()
         );
+        unset($products[1]);
 
-        array_map(function ($productType) use ($response) {
+        array_map(function ($product) use ($response) {
             $this->assertStringNotContainsString(
-                $productType->{ProductTypeConstant::PRICE},
+                $product
+                    ->colors
+                    ->first()
+                    ->pivot
+                    ->{ColorProductConstant::PRICE},
                 $response->getContent()
             );
-        }, $productTypes);
+        }, $products);
+    }
+
+    /** @test */
+    public function only_products_colors_that_are_in_range_must_return()
+    {
+        $this->withoutExceptionHandling();
+        $prices = [10000, 17000, 25000, 18000];
+        $product = factory(Product::class)->create();
+        
+        array_map(function ($price) use ($product) {
+            $product->colors()->attach(
+                factory(Color::class)->create()->id,
+                [ColorProductConstant::PRICE => $price]
+            );
+        }, $prices);
+
+        $response = $this->get(route('products', [
+            'price_range' => "15000,17400"
+        ]));
+        $response->assertStatus(200);
+
+        (function ($colors, $response) {
+            $this->assertStringContainsString(
+                    $colors[1]
+                    ->pivot
+                    ->{ColorProductConstant::PRICE},
+                $response
+            );
+            unset($colors[1]);
+
+            $colors->each(function ($color) use ($response) {
+                $this->assertStringNotContainsString(
+                        $color
+                        ->pivot
+                        ->{ColorProductConstant::PRICE},
+                    $response
+                );
+            });
+        })($product->colors, $response->getContent());
     }
 }

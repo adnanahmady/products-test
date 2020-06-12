@@ -4,8 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Constants\Product as ProductConstant;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Constants\ColorProduct;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
@@ -18,11 +19,13 @@ class Product extends Model
     /**
      * product colors and prices
      *
-     * @return HasMany
+     * @return BelongsToMany
      */
-    public function productTypes(): HasMany
+    public function colors(): BelongsToMany
     {
-        return $this->hasMany(ProductType::class);
+        return $this->belongsToMany(Color::class)
+                    ->withPivot(ColorProduct::PRICE)
+                    ->withTimestamps();
     }
 
     /**
@@ -35,6 +38,12 @@ class Product extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * filters query
+     *
+     * @param mixed $query
+     * @param mixed $filter
+     */
     public function scopeFilter($query, $filter)
     {
         return $filter->apply($query);

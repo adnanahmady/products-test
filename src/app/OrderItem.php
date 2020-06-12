@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Constants\OrderItem as OrderItemConstant;
-use App\Constants\ProductType as ProductTypeConstant;
+use App\Constants\ColorProduct as ColorProductConstant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItem extends Model
@@ -21,9 +21,9 @@ class OrderItem extends Model
      */
     public function productType(): BelongsTo
     {
-        return $this->belongsTo(ProductType::class, [
-            ProductTypeConstant::PRODUCT_ID,
-            ProductTypeConstant::COLOR_ID
+        return $this->belongsTo(ColorProduct::class, [
+            ColorProductConstant::PRODUCT_ID,
+            ColorProductConstant::COLOR_ID
         ]);
     }
 
